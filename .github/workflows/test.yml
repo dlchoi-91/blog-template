@@ -40,7 +40,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          role-to-assume: ${{ vars.AWS_ASSUME_ROLE_ARN }}
           role-session-name: profblog_test_session
           aws-region: ${{ vars.AWS_REGION }}
 
