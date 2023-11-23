@@ -1,0 +1,48 @@
+name: test bucket
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
+jobs:
+  build_and_test:
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install wheel
+          pip install -r requirements.txt
+
+      - name: Configure pelican
+        run: pelican-themes --install ./pelican-themes/Flex --verbose
+
+      - name: Build static site
+        run: pelican content -s publishconf.py
+
+      #Updated with assume role 2023-11-22
+      #link = https://github.com/aws-actions/configure-aws-credentials#configure-aws-credentials-for-github-actions
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          role-session-name: profblog_test_session
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy static site to S3 bucket
+        run: aws s3 sync ./output/ ${{ vars.TEST_BUCKET }} --delete
